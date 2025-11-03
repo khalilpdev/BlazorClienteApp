@@ -1,0 +1,92 @@
+﻿@page "/cadastro"
+@page "/cadastro/{Id:guid}"
+@using BlazorClienteApp.Models
+@inject ClienteService ClienteService
+@inject NavigationManager Navigation
+
+<PageTitle>Cadastro de Cliente</PageTitle>
+
+<div class="container mt-4">
+    <h3>@(Id.HasValue ? "Editar Cliente" : "Cadastrar Cliente")</h3>
+
+    <EditForm Model="@cliente" OnValidSubmit="@SalvarCliente">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome</label>
+            <InputText id="nome" class="form-control" @bind-Value="cliente.Nome" />
+            <ValidationMessage For="@(() => cliente.Nome)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="telefone" class="form-label">Telefone</label>
+            <InputText id="telefone" class="form-control" @bind-Value="cliente.Telefone" placeholder="(00) 00000-0000" />
+            <ValidationMessage For="@(() => cliente.Telefone)" />
+        </div>
+
+        <div class="mb-3">
+            <label for="cpfcnpj" class="form-label">CPF/CNPJ</label>
+            <InputText id="cpfcnpj" class="form-control" @bind-Value="cliente.CpfCnpj" />
+            <ValidationMessage For="@(() => cliente.CpfCnpj)" />
+        </div>
+
+        @if (Id.HasValue)
+        {
+            <div class="mb-3">
+                <label class="form-label">Data do Cadastro</label>
+                <input type="text" class="form-control" value="@cliente.DataDoCadastro.ToString("dd/MM/yyyy HH:mm")" disabled />
+            </div>
+        }
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Salvar</button>
+            <button type="button" class="btn btn-secondary" @onclick="Voltar">Cancelar</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private Cliente cliente = new();
+
+    protected override void OnInitialized()
+    {
+        if (Id.HasValue)
+        {
+            var clienteExistente = ClienteService.ObterPorId(Id.Value);
+            if (clienteExistente != null)
+            {
+                cliente = new Cliente
+                {
+                    Id = clienteExistente.Id,
+                    Nome = clienteExistente.Nome,
+                    Telefone = clienteExistente.Telefone,
+                    CpfCnpj = clienteExistente.CpfCnpj,
+                    DataDoCadastro = clienteExistente.DataDoCadastro
+                };
+            }
+        }
+    }
+
+    private void SalvarCliente()
+    {
+        if (Id.HasValue)
+        {
+            ClienteService.Atualizar(cliente);
+        }
+        else
+        {
+            ClienteService.Adicionar(cliente);
+        }
+
+        Navigation.NavigateTo("/consulta");
+    }
+
+    private void Voltar()
+    {
+        Navigation.NavigateTo("/consulta");
+    }
+}
